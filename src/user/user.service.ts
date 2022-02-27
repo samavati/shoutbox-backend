@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -24,6 +24,15 @@ export class UsersService {
 
     findByName(name: string): Promise<User> {
         return this.usersRepository.findOne({ name });
+    }
+
+    async handleJoin(user: Omit<User, 'messages'>){
+        const presentUser = await this.findByName(user.name);
+        if (!presentUser) {
+            return this.add(user);
+        }
+
+        throw new BadRequestException(`${user.name} is taken. try another name.`)
     }
 
     async remove(id: string): Promise<void> {
