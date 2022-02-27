@@ -3,7 +3,7 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne } f
 
 @Entity()
 export class Message {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn()
   id: string;
 
   @CreateDateColumn({ type: 'timestamp' })
@@ -12,6 +12,6 @@ export class Message {
   @Column('longtext')
   message: string;
 
-  @ManyToOne(type => User, user => user.messages, { onDelete: "CASCADE" })
+  @ManyToOne(type => User, user => user.messages, { onDelete: "SET NULL" })
   user: User;
 }

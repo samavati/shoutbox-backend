@@ -1,6 +1,7 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io';
 import { ChatService } from "./chat.service";
+import { AdminMessageEvent, MessageEvent } from "./ChatEvent.enum";
 
 @WebSocketGateway({
     cors: {
@@ -11,6 +12,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(private chatService: ChatService) { }
 
+    room = "GENERAL"
+
     @WebSocketServer()
     server: Server;
 
@@ -18,6 +21,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     handleDisconnect(client: Socket) {
+        this.server.to(this.room).emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.LEAVED_SUCCESSFULLY, message: '', data: { id: client.id } });
         this.chatService.handleLeave(client.id);
     }
 
@@ -30,23 +34,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const IP = client.handshake.address;
         try {
             await this.chatService.handleJoin({ id: client.id, name: data.name, user_agent, IP });
-            client.join('GENERAL');
-            client.emit('ADMIN_MESSAGE', { type: 'JOINED_SUCCESSFULLY', message: `welcome ${data.name}`, data: { name: data.name, id: client.id } })
-            client.broadcast.to('GENERAL').emit('ADMIN_MESSAGE', { type: 'NEW_MEMBER_JOINED', message: `${data.name} joined to the channel`, data: { name: data.name, id: client.id } })
+            client.join(this.room);
+            client.emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.JOINED_SUCCESSFULLY, message: `welcome ${data.name}`, data: { name: data.name, id: client.id } })
+            client.broadcast.to(this.room).emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.NEW_MEMBER_JOINED, message: `${data.name} joined to the channel`, data: { name: data.name, id: client.id } })
 
         } catch (error) {
             console.log(error)
         }
     }
 
-    @SubscribeMessage('message')
+    @SubscribeMessage(MessageEvent.USER_MESSAGE)
     async handleMessage(
         @MessageBody() data: { message: string },
         @ConnectedSocket() client: Socket,
     ) {
         const message = await this.chatService.handleAddMessage(data, client.id);
         // TODO: remove users data from message
-        this.server.emit('message', message);
+        this.server.to(this.room).emit(MessageEvent.USER_MESSAGE, message);
     }
 
     @SubscribeMessage('LEAVE')

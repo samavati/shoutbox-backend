@@ -29,4 +29,13 @@ export class MessagesService {
     async remove(id: string): Promise<void> {
         await this.messagesRepository.delete(id);
     }
+
+    async count(): Promise<number> {
+        return this.messagesRepository.count()
+    }
+
+    async shift(): Promise<void> {
+        const firstItem = await this.messagesRepository.findOne()
+        await this.messagesRepository.delete(firstItem.id)
+    }
 }
