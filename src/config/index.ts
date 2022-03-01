@@ -1,1 +1,1 @@
-export const LIMIT_SAVE_MESSAGE = 5;
+export const LIMIT_SAVE_MESSAGE = 100;
