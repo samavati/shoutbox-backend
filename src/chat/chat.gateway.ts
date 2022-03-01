@@ -32,9 +32,15 @@ export class ChatGateway implements OnGatewayDisconnect {
         @MessageBody() data: { name: string },
         @ConnectedSocket() client: Socket,
     ) {
-        client.join(this.room);
-        client.emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.JOINED_SUCCESSFULLY, payload: { id: uuidv4(), message: `Welcome ${data.name}.`, data: { name: data.name, id: client.id } } })
-        client.broadcast.to(this.room).emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.NEW_MEMBER_JOINED, payload: { id: uuidv4(), message: `${data.name} joined to the room.`, data: { name: data.name, id: client.id } } })
+        const user = await this.usersService.findOne(client.id);
+
+        if (user) {
+            client.join(this.room);
+            client.emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.JOINED_SUCCESSFULLY, payload: { id: uuidv4(), message: `Welcome ${data.name}.`, data: { name: data.name, id: client.id } } })
+            client.broadcast.to(this.room).emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.NEW_MEMBER_JOINED, payload: { id: uuidv4(), message: `${data.name} joined to the room.`, data: { name: data.name, id: client.id } } })
+        } else {
+            client.emit(MessageEvent.ADMIN_MESSAGE, { type: AdminMessageEvent.JOIN_REJECTED, payload: { id: uuidv4(), message: `Sorry ${data.name}. you have to set name from my "Enter the room" page`, data: { name: data.name, id: client.id } } })
+        }
     }
 
     @SubscribeMessage(MessageEvent.USER_MESSAGE)
