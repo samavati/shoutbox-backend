@@ -47,8 +47,10 @@ $ npm run start:prod
 
 If you want to run and test this application on your local system you need to customize:
 
-- **Running Port**: in `src/main.ts` you can find `app.listen(process.env.PORT || 80);` and change 80 with your desired port.
+- **Running Port**: in `src/main.ts` you can find `app.listen(process.env.PORT || 3000);` and change 3000 with your desired port.
 - **DB Config**: in this app [typeorm](https://typeorm.io/#/) is used to manage database Object–relational mapping and you can customize it's configuration in `ormconfig.json`(which you can find at the root of project).
+
+- **Show Message Limit**: you can customize how many message you like to show in the room at `src/config/index.ts`
 
     {
     "type": "mysql",
